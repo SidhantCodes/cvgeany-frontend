@@ -5,8 +5,11 @@ import { useDropzone } from "react-dropzone"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Upload, FileText, Loader2, AlertCircle } from "lucide-react"
+import { FaFileUpload } from "react-icons/fa";
 import type { Portfolio } from "@/types/portfolio"
 import { toast } from "@/hooks/use-toast"
+import Features from "./Features"
+import Hero from "./Hero"
 
 interface UploaderProps {
   onUploadSuccess: (portfolio: Portfolio) => void
@@ -94,22 +97,7 @@ export default function Uploader({ onUploadSuccess }: UploaderProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-3 mb-6">
-          <div className="h-12 w-12 bg-purple-600 rounded-lg flex items-center justify-center">
-            <FileText className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-white">
-            <span className="text-purple-500">CV</span>Geany
-          </h1>
-        </div>
-        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-          Turn your Resume PDF into a downloadable portfolio website in seconds
-        </p>
-        <p className="text-sm text-gray-400">Powered by AI • Professional • Fast</p>
-      </div>
-
+      <Hero />
       {/* Upload Area */}
       <Card className="border-2 border-dashed border-gray-700 bg-gray-900/50 hover:border-purple-500/50 transition-colors">
         <CardContent className="p-8">
@@ -125,7 +113,7 @@ export default function Uploader({ onUploadSuccess }: UploaderProps) {
               {isDragActive ? (
                 <Upload className="h-16 w-16 text-purple-500 animate-bounce" />
               ) : (
-                <FileText className="h-16 w-16 text-gray-400" />
+                <FaFileUpload className="h-16 w-16 text-gray-400" />
               )}
             </div>
 
@@ -135,13 +123,6 @@ export default function Uploader({ onUploadSuccess }: UploaderProps) {
               </h3>
               <p className="text-gray-400">Drag and drop your PDF resume, or click to browse</p>
             </div>
-
-            <Button
-              variant="outline"
-              className="border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white bg-transparent"
-            >
-              Choose File
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -158,30 +139,7 @@ export default function Uploader({ onUploadSuccess }: UploaderProps) {
         </Card>
       )}
 
-      {/* Features */}
-      <div className="grid md:grid-cols-3 gap-6 mt-12">
-        <div className="text-center space-y-2">
-          <div className="h-12 w-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto">
-            <Upload className="h-6 w-6 text-purple-500" />
-          </div>
-          <h3 className="font-semibold text-white">Easy Upload</h3>
-          <p className="text-gray-400 text-sm">Simply drag and drop your PDF resume</p>
-        </div>
-        <div className="text-center space-y-2">
-          <div className="h-12 w-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto">
-            <Loader2 className="h-6 w-6 text-purple-500" />
-          </div>
-          <h3 className="font-semibold text-white">AI Processing</h3>
-          <p className="text-gray-400 text-sm">Advanced AI extracts and structures your data</p>
-        </div>
-        <div className="text-center space-y-2">
-          <div className="h-12 w-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto">
-            <FileText className="h-6 w-6 text-purple-500" />
-          </div>
-          <h3 className="font-semibold text-white">Ready Portfolio</h3>
-          <p className="text-gray-400 text-sm">Download your complete portfolio website</p>
-        </div>
-      </div>
+      <Features />
     </div>
   )
 }
