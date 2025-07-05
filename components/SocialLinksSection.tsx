@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2, Edit3, FileText, X } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 import type { SocialLink } from "@/types/portfolio"
 
 
@@ -58,13 +58,13 @@ export function SocialLinksSection({ socials, onUpdate }: SocialLinksProps) {
                 placeholder="Platform (e.g., github, linkedin)"
                 value={social.name}
                 onChange={(e) => updateSocial(index, { name: e.target.value })}
-                className="bg-gray-800 border-gray-600 text-white"
+                className="bg-gray-800 border-gray-600 text-white w-40"
               />
               <Input
                 placeholder="URL"
                 value={social.url}
                 onChange={(e) => updateSocial(index, { url: e.target.value })}
-                className="bg-gray-800 border-gray-600 text-white flex-1"
+                className="bg-gray-800 border-gray-600 w-[4rem] text-white flex-1"
               />
               <Button onClick={() => removeSocial(index)} variant="destructive" size="sm">
                 <Trash2 className="h-4 w-4" />

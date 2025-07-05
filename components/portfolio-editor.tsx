@@ -36,7 +36,7 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
             <h1 className="text-3xl font-bold text-white">
               <span className="text-purple-500">CV</span>Geany Editor
             </h1>
-            <p className="text-gray-400">Make any adjustments before generating your portfolio</p>
+            <p className="text-gray-400">Make any adjustments before generating your portfolio. <br /> Please verify all generated Links</p>
           </div>
         </div>
         <Button variant="outline" onClick={onBack}>
