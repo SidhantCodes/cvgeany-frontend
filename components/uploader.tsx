@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Upload, FileText, Loader2, AlertCircle } from "lucide-react"
 import { FaFileUpload } from "react-icons/fa";
 import type { Portfolio } from "@/types/portfolio"
@@ -29,7 +28,7 @@ export default function Uploader({ onUploadSuccess }: UploaderProps) {
 
       setUploadProgress("Analyzing resume...")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}/upload-resume`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL || 'http://localhost:8000'}/upload-resume`, {
         method: "POST",
         body: formData,
       })

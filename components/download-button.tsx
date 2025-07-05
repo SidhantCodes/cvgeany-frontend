@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Download, Loader2, CheckCircle } from "lucide-react"
+import { Download, Loader2 } from "lucide-react"
 import type { Portfolio } from "@/types/portfolio"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
+import Link from "next/link"
 
 interface DownloadButtonProps {
   portfolio: Portfolio
@@ -12,7 +13,6 @@ interface DownloadButtonProps {
 
 export default function DownloadButton({ portfolio }: DownloadButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isComplete, setIsComplete] = useState(false)
 
   const downloadBlob = (blob: Blob, filename: string) => {
     const url = window.URL.createObjectURL(blob)
@@ -28,7 +28,6 @@ export default function DownloadButton({ portfolio }: DownloadButtonProps) {
 
   const handleDownload = async () => {
     setIsGenerating(true)
-    setIsComplete(false)
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_SERVER_URL}/generate-portfolio`, {
@@ -48,33 +47,28 @@ export default function DownloadButton({ portfolio }: DownloadButtonProps) {
 
       downloadBlob(blob, filename)
 
-      setIsComplete(true)
-      toast({
-        title: "Success!",
-        description: "Your CVGeany portfolio has been generated and downloaded successfully.",
+      toast.success("Your portfolio has been downloaded!", {
+        description: (
+          <>
+            Follow the{" "}
+            <Link
+              href="/how-to-deploy"
+              className="font-bold underline text-purple-400 hover:text-purple-300"
+            >
+              docs
+            </Link>{" "}
+            to see the next steps.
+          </>
+        ),
       })
-
-      // Reset complete state after 3 seconds
-      setTimeout(() => setIsComplete(false), 3000)
     } catch (error) {
       console.error("Download error:", error)
-      toast({
-        title: "Generation Failed",
+      toast.error("Generation Failed", {
         description: error instanceof Error ? error.message : "Failed to generate your portfolio. Please try again.",
-        variant: "destructive",
       })
     } finally {
       setIsGenerating(false)
     }
-  }
-
-  if (isComplete) {
-    return (
-      <Button className="w-full bg-green-600 hover:bg-green-700" disabled>
-        <CheckCircle className="h-4 w-4 mr-2" />
-        Downloaded Successfully!
-      </Button>
-    )
   }
 
   return (
