@@ -5,11 +5,11 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-800 bg-gray-900/50 mt-auto">
+    <footer className="border-t border-gray-800 bg-gray-900/30 mt-auto">
       <div className="container mx-auto px-4 py-5">
         <div className="flex justify-between">
           <div>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-xs md:text-sm ">
               © 2025 CVGeany. Made with 💖 and lots of ☕
             </p>
           </div>
