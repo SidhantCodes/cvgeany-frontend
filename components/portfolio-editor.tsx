@@ -2,15 +2,40 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { FileText, Eye, Edit3, ExternalLink, Monitor, Smartphone } from "lucide-react"
+import { FileText, Eye, Edit3, ExternalLink, Monitor, Smartphone, Loader2, AlertCircle } from "lucide-react"
 import type { Portfolio } from "@/types/portfolio"
 import { BasicInformation } from "./BasicInformation"
-import { WorkExperienceSection } from "./WorkExpirience"
+import { WorkExperienceSection } from "./WorkExperience"
 import { ProjectsSection } from "./ProjectsSection"
 import { SkillsSection } from "./SkillsSection"
 import { SocialLinksSection } from "./SocialLinksSection"
 import { SEOKeywordsSection } from "./SEOKeywordsSection"
 import { PreviewSidebar } from "./PreviewSidebar"
+
+// A self-contained loader component to display while the iframe prepares.
+const IframeLoader = () => (
+  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 z-10">
+    <Loader2 className="h-12 w-12 animate-spin text-purple-500" />
+    <p className="mt-4 text-white">Initializing Preview...</p>
+  </div>
+);
+
+// Error component for preview issues
+const PreviewError = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 z-10">
+    <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+    <p className="text-white text-center mb-4">
+      Preview is currently unavailable.<br />
+      The preview file may be missing or corrupted.
+    </p>
+    <Button onClick={onRetry} variant="outline" className="mb-2">
+      Retry Preview
+    </Button>
+    <p className="text-gray-400 text-sm text-center">
+      Please ensure /portfolio-preview/index.html exists and is accessible
+    </p>
+  </div>
+);
 
 interface PortfolioEditorProps {
   portfolio: Portfolio
@@ -21,94 +46,134 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
   const [portfolio, setPortfolio] = useState<Portfolio>(initialPortfolio)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit' as const)
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop' as const)
-  const [iframeLoaded, setIframeLoaded] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  const updatePortfolio = (updates: Partial<Portfolio>) => {
-    setPortfolio((prev) => ({ ...prev, ...updates }))
-  }
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const revealTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Send updated data to preview iframe - this is the key logic for dynamic updates
+  const updatePortfolio = (updates: Partial<Portfolio>) => {
+    setPortfolio((prev) => ({ ...prev, ...updates }));
+  };
+
+  // Send updated data to preview iframe dynamically
   useEffect(() => {
     const sendDataToIframes = () => {
-      // Send to main preview iframe only if it's loaded
       if (iframeRef.current?.contentWindow && iframeLoaded) {
         try {
           iframeRef.current.contentWindow.postMessage({
             type: 'updatePortfolio',
             payload: portfolio
-          }, '*')
-          console.log('Portfolio data sent to main iframe:', portfolio.name)
+          }, '*');
+          console.log('Portfolio data sent to main iframe:', portfolio.name);
         } catch (error) {
-          console.error('Error sending data to main iframe:', error)
+          console.error('Error sending data to main iframe:', error);
         }
       }
-    }
+    };
 
-    // Only send data if at least one iframe is loaded
     if (iframeLoaded) {
-      // Debounce the data sending to prevent excessive updates
-      const timer = setTimeout(sendDataToIframes, 300)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(sendDataToIframes, 300);
+      return () => clearTimeout(timer);
     }
-  }, [portfolio, iframeLoaded])
+  }, [portfolio, iframeLoaded]);
 
-  // Handle iframe load event to send initial data
-  const handleIframeLoad = useCallback(() => {
-    if (iframeRef.current?.contentWindow) {
-      try {
-        iframeRef.current.contentWindow.postMessage({
-          type: 'updatePortfolio',
-          payload: portfolio
-        }, '*')
-        console.log('Initial portfolio data sent to main iframe:', portfolio.name)
-      } catch (error) {
-        console.error('Error sending initial data to main iframe:', error)
+  useEffect(() => {
+    if (activeTab === 'preview') {
+      setIsLoadingPreview(true);
+      setPreviewError(false);
+      setIframeLoaded(false);
+    }
+    return () => {
+      if (revealTimeoutRef.current) {
+        clearTimeout(revealTimeoutRef.current);
       }
+    };
+  }, [activeTab]);
+
+  const handleIframeLoad = useCallback(() => {
+    const iframe = iframeRef.current;
+    // Ensure the iframe and its content window are accessible
+    if (!iframe?.contentWindow) {
+      console.error("Parent: iframe contentWindow is not available on load.");
+      setPreviewError(true);
+      setIsLoadingPreview(false);
+      return;
     }
-  }, [portfolio])
 
-  // Generate preview URL with current portfolio data
+    console.log("Parent: iframe `onLoad` event has fired. Triggering data send via useEffect.");
+    setIframeLoaded(true);
+
+    const GRACE_PERIOD_MS = 5000;
+
+    if (revealTimeoutRef.current) {
+      clearTimeout(revealTimeoutRef.current);
+    }
+
+    revealTimeoutRef.current = setTimeout(() => {
+      console.log(`Parent: ${GRACE_PERIOD_MS}ms grace period has finished. Revealing the iframe.`);
+      if (iframeRef.current) {
+        iframeRef.current.style.opacity = '1';
+      }
+      setIsLoadingPreview(false);
+    }, GRACE_PERIOD_MS);
+
+  }, []);
+
+  const handleIframeError = useCallback(() => {
+    console.error("Parent: iframe failed to load");
+    setPreviewError(true);
+    setIsLoadingPreview(false);
+  }, []);
+
   const generatePreviewUrl = () => {
-    // Use the local static preview site - assets now copied to public/_next
-    return "/portfolio-preview/index.html"
-  }
-
-  const handleDeployPortfolio = () => {
-    console.log("Deploying portfolio with data:", portfolio)
+    return "/portfolio-preview/index.html";
   }
 
   const handleOpenInNewTab = useCallback(() => {
-    // Create a new window with the portfolio data
-    const newWindow = window.open(generatePreviewUrl(), '_blank')
-    
-    // Wait for the new window to load and then send data
+    const previewUrl = generatePreviewUrl();
+    const newWindow = window.open(previewUrl, '_blank');
+
     if (newWindow) {
       const checkIfLoaded = setInterval(() => {
         try {
           if (newWindow.document.readyState === 'complete') {
-            clearInterval(checkIfLoaded)
+            clearInterval(checkIfLoaded);
             setTimeout(() => {
-              newWindow.postMessage({
-                type: 'updatePortfolio',
-                payload: portfolio
-              }, '*')
-              console.log('Portfolio data sent to new tab:', portfolio.name)
-            }, 1000)
+              try {
+                newWindow.postMessage({ type: 'updatePortfolio', payload: portfolio }, '*');
+              } catch (error) {
+                console.error('Error sending message to new tab:', error);
+              }
+            }, 1000);
           }
         } catch (e) {
-          // Handle cross-origin issues
-          console.error('Error with new tab:', e)
-          clearInterval(checkIfLoaded)
+          console.error('Error communicating with new tab:', e);
+          clearInterval(checkIfLoaded);
         }
-      }, 100)
-      
-      // Cleanup after 10 seconds to prevent memory leaks
-      setTimeout(() => {
-        clearInterval(checkIfLoaded)
-      }, 10000)
+      }, 100);
+
+      setTimeout(() => clearInterval(checkIfLoaded), 10000);
+    } else {
+      console.error('Failed to open new tab - popup may be blocked');
     }
-  }, [portfolio])
+  }, [portfolio]);
+
+  const retryPreview = useCallback(() => {
+    setPreviewError(false);
+    setIsLoadingPreview(true);
+    setIframeLoaded(false);
+
+    const iframe = iframeRef.current;
+    if (iframe) {
+      const currentSrc = iframe.src;
+      iframe.src = '';
+      setTimeout(() => {
+        iframe.src = currentSrc;
+      }, 100);
+    }
+  }, []);
 
   if (activeTab === 'preview') {
     return (
@@ -131,9 +196,8 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
               </h1>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
-            {/* Device Toggle */}
             <div className="flex items-center space-x-2 bg-gray-800 p-1 rounded-lg">
               <Button
                 variant={previewDevice === 'desktop' ? 'default' : 'ghost'}
@@ -154,16 +218,16 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
                 <span>Mobile</span>
               </Button>
             </div>
-            
+
             <Button
               variant="outline"
               onClick={handleOpenInNewTab}
               className="flex items-center space-x-2"
+              disabled={previewError}
             >
               <ExternalLink className="h-4 w-4" />
               <span>Open in New Tab</span>
             </Button>
-            
           </div>
         </div>
 
@@ -181,14 +245,15 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
               {portfolio.name}'s Portfolio
             </div>
           </div>
-          
-          {/* iframe Container */}
-          <div className={`mx-auto bg-white rounded-lg overflow-hidden shadow-2xl ${
-            previewDevice === 'desktop' ? 'w-full' : 'w-96'
-          }`}>
-            <div className={`transition-all duration-300 ${
-              previewDevice === 'desktop' ? 'h-[800px]' : 'h-[600px]'
+
+          <div className={`mx-auto bg-white rounded-lg overflow-hidden shadow-2xl ${previewDevice === 'desktop' ? 'w-full' : 'w-96'
             }`}>
+            <div className={`relative transition-all duration-300 ${previewDevice === 'desktop' ? 'h-[800px]' : 'h-[600px]'
+              }`}>
+
+              {isLoadingPreview && !previewError && <IframeLoader />}
+              {previewError && <PreviewError onRetry={retryPreview} />}
+
               <iframe
                 ref={iframeRef}
                 src={generatePreviewUrl()}
@@ -196,6 +261,11 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
                 title="Portfolio Preview"
                 sandbox="allow-scripts allow-same-origin"
                 onLoad={handleIframeLoad}
+                onError={handleIframeError}
+                style={{
+                  opacity: previewError || isLoadingPreview ? 0 : 1,
+                  transition: 'opacity 0.4s ease-in-out'
+                }}
               />
             </div>
           </div>
@@ -204,6 +274,7 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
     )
   }
 
+  // --- Render logic for the Edit Tab ---
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
@@ -228,17 +299,17 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
 
       <div className="flex space-x-1 p-1 rounded-lg w-fit">
         <Button
-          variant={activeTab === 'edit' ? 'default' : 'ghost'}
+          variant='default'
           onClick={() => setActiveTab('edit')}
-          className={`flex items-center space-x-2 ${activeTab === 'edit' ? `text-purple-500` : `text-white` }`}
+          className="flex items-center space-x-2 text-purple-500"
         >
           <Edit3 className="h-4 w-4" />
           <span>Edit</span>
         </Button>
         <Button
-          variant={activeTab === 'edit' ? 'default' : 'ghost'}
+          variant='ghost'
           onClick={() => setActiveTab('preview')}
-          className={`flex items-center space-x-2 ${activeTab === 'edit' ? `text-black` : `text-purple-500` }`}
+          className="flex items-center space-x-2 text-white"
         >
           <Eye className="h-4 w-4" />
           <span>Preview</span>
@@ -246,38 +317,32 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <BasicInformation portfolio={portfolio} onUpdate={updatePortfolio} />
-          
-          <WorkExperienceSection 
-            workExperience={portfolio.workExperience} 
-            onUpdate={(workExperience) => updatePortfolio({ workExperience })} 
+          <WorkExperienceSection
+            workExperience={portfolio.workExperience}
+            onUpdate={(workExperience) => updatePortfolio({ workExperience })}
           />
-          
           <ProjectsSection
-            projects={portfolio.projects} 
-            onUpdate={(projects) => updatePortfolio({ projects })} 
+            projects={portfolio.projects}
+            onUpdate={(projects) => updatePortfolio({ projects })}
           />
-          
           <SkillsSection
-            skillsData={portfolio.skillsData} 
-            onUpdate={(skillsData) => updatePortfolio({ skillsData })} 
+            skillsData={portfolio.skillsData}
+            onUpdate={(skillsData) => updatePortfolio({ skillsData })}
           />
-          
           <SocialLinksSection
-            socials={portfolio.socials} 
-            onUpdate={(socials) => updatePortfolio({ socials })} 
+            socials={portfolio.socials}
+            onUpdate={(socials) => updatePortfolio({ socials })}
           />
-          
-          <SEOKeywordsSection 
-            seoKeywords={portfolio.seoKeywords} 
-            onUpdate={(seoKeywords) => updatePortfolio({ seoKeywords })} 
+          <SEOKeywordsSection
+            seoKeywords={portfolio.seoKeywords}
+            onUpdate={(seoKeywords) => updatePortfolio({ seoKeywords })}
           />
         </div>
-        
+
         <div className="space-y-6">
-          <PreviewSidebar portfolio={portfolio} />          
+          <PreviewSidebar portfolio={portfolio} />
         </div>
       </div>
     </div>
