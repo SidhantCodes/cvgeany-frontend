@@ -5,6 +5,8 @@ import "./globals.css"
 import { Analytics } from "@vercel/analytics/next"
 import Footer from "@/components/footer"
 import { ThemeProvider } from "@/components/theme-provider"
+import Navbar from "@/components/navbar"
+import BrowserBanner from "@/components/browser-banner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -44,6 +46,8 @@ export default function RootLayout({
           defaultTheme="dark"
           disableTransitionOnChange
         >
+          <Navbar />
+          <BrowserBanner />
           {children}
           <Footer />
           <Analytics />

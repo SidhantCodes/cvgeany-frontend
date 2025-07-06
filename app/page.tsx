@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/sonner"
 import Uploader from "@/components/uploader"
 import PortfolioEditor from "@/components/portfolio-editor"
 import type { Portfolio } from "@/types/portfolio"
-import Navbar from "@/components/navbar"
 
 type AppState = "upload" | "edit"
 
@@ -25,10 +24,9 @@ const handleBackToUpload = () => {
 
 return (
   <main className="min-h-screen bg-black text-white">
-    <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        {appState === "upload" && <Uploader onUploadSuccess={handleUploadSuccess} />}
-        {appState === "edit" && portfolio && <PortfolioEditor portfolio={portfolio} onBack={handleBackToUpload} />}
+    <div className="container mx-auto px-4 py-8">
+      {appState === "upload" && <Uploader onUploadSuccess={handleUploadSuccess} />}
+      {appState === "edit" && portfolio && <PortfolioEditor portfolio={portfolio} onBack={handleBackToUpload} />}
       </div>
     <Toaster />
   </main>
