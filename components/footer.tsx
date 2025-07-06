@@ -16,13 +16,13 @@ export default function Footer() {
           {/* Connect */}
           <div className="space-y-4">
             <div className="flex space-x-4">
-              <Link href={process.env.NEXT_PUBLIC_GITHUB || "#"} className="text-gray-400 hover:text-purple-400 transition-colors">
+              <Link href="https://github.com/SidhantCodes" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <FaGithub className="h-5 w-5" />
               </Link>
-              <Link href={process.env.NEXT_PUBLIC_X || "#"} className="text-gray-400 hover:text-purple-400 transition-colors">
+              <Link href="https://x.com/TotallySidhant" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <FaXTwitter className="h-5 w-5" />
               </Link>
-              <Link href={process.env.NEXT_PUBLIC_MAIL || "#"} className="text-gray-400 hover:text-purple-400 transition-colors">
+              <Link href="mailto:mishrasidhant01@gmail.com" className="text-gray-400 hover:text-purple-400 transition-colors">
                 <IoMdMail className="h-5 w-5" />
               </Link>
             </div>
