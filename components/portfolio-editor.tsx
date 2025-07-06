@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { FileText, Eye, Edit3, ExternalLink, Monitor, Smartphone } from "lucide-react"
 import type { Portfolio } from "@/types/portfolio"
@@ -21,24 +21,51 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
   const [portfolio, setPortfolio] = useState<Portfolio>(initialPortfolio)
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit' as const)
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop' as const)
+  const [iframeLoaded, setIframeLoaded] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const updatePortfolio = (updates: Partial<Portfolio>) => {
     setPortfolio((prev) => ({ ...prev, ...updates }))
   }
 
-  // Send updated data to preview iframe
+  // Send updated data to preview iframe - this is the key logic for dynamic updates
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (iframeRef.current?.contentWindow) {
+    const sendDataToIframes = () => {
+      // Send to main preview iframe only if it's loaded
+      if (iframeRef.current?.contentWindow && iframeLoaded) {
+        try {
+          iframeRef.current.contentWindow.postMessage({
+            type: 'updatePortfolio',
+            payload: portfolio
+          }, '*')
+          console.log('Portfolio data sent to main iframe:', portfolio.name)
+        } catch (error) {
+          console.error('Error sending data to main iframe:', error)
+        }
+      }
+    }
+
+    // Only send data if at least one iframe is loaded
+    if (iframeLoaded) {
+      // Debounce the data sending to prevent excessive updates
+      const timer = setTimeout(sendDataToIframes, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [portfolio, iframeLoaded])
+
+  // Handle iframe load event to send initial data
+  const handleIframeLoad = useCallback(() => {
+    if (iframeRef.current?.contentWindow) {
+      try {
         iframeRef.current.contentWindow.postMessage({
           type: 'updatePortfolio',
           payload: portfolio
         }, '*')
+        console.log('Initial portfolio data sent to main iframe:', portfolio.name)
+      } catch (error) {
+        console.error('Error sending initial data to main iframe:', error)
       }
-    }, 500) // Small delay to ensure iframe is loaded
-
-    return () => clearTimeout(timer)
+    }
   }, [portfolio])
 
   // Generate preview URL with current portfolio data
@@ -51,9 +78,37 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
     console.log("Deploying portfolio with data:", portfolio)
   }
 
-  const handleOpenInNewTab = () => {
-    window.open(generatePreviewUrl(), '_blank')
-  }
+  const handleOpenInNewTab = useCallback(() => {
+    // Create a new window with the portfolio data
+    const newWindow = window.open(generatePreviewUrl(), '_blank')
+    
+    // Wait for the new window to load and then send data
+    if (newWindow) {
+      const checkIfLoaded = setInterval(() => {
+        try {
+          if (newWindow.document.readyState === 'complete') {
+            clearInterval(checkIfLoaded)
+            setTimeout(() => {
+              newWindow.postMessage({
+                type: 'updatePortfolio',
+                payload: portfolio
+              }, '*')
+              console.log('Portfolio data sent to new tab:', portfolio.name)
+            }, 1000)
+          }
+        } catch (e) {
+          // Handle cross-origin issues
+          console.error('Error with new tab:', e)
+          clearInterval(checkIfLoaded)
+        }
+      }, 100)
+      
+      // Cleanup after 10 seconds to prevent memory leaks
+      setTimeout(() => {
+        clearInterval(checkIfLoaded)
+      }, 10000)
+    }
+  }, [portfolio])
 
   if (activeTab === 'preview') {
     return (
@@ -109,12 +164,6 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
               <span>Open in New Tab</span>
             </Button>
             
-            <Button
-              onClick={handleDeployPortfolio}
-              className="bg-purple-600 hover:bg-purple-700 flex items-center space-x-2"
-            >
-              <span>Deploy Portfolio</span>
-            </Button>
           </div>
         </div>
 
@@ -129,7 +178,7 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
               </div>
             </div>
             <div className="text-sm text-gray-400">
-              Demo Preview
+              {portfolio.name}'s Portfolio
             </div>
           </div>
           
@@ -146,22 +195,8 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
                 className="w-full h-full border-0"
                 title="Portfolio Preview"
                 sandbox="allow-scripts allow-same-origin"
+                onLoad={handleIframeLoad}
               />
-            </div>
-          </div>
-        </div>
-
-        {/* Preview Info */}
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-400">
-                This is a live preview of your portfolio website. Any changes you make in the editor will be reflected here.
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Live</span>
             </div>
           </div>
         </div>
@@ -185,34 +220,25 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('preview')}
-            className="flex items-center space-x-2"
-          >
-            <Eye className="h-4 w-4" />
-            <span>Preview</span>
-          </Button>
           <Button variant="outline" onClick={onBack}>
             Upload New Resume
           </Button>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg w-fit">
+      <div className="flex space-x-1 p-1 rounded-lg w-fit">
         <Button
           variant={activeTab === 'edit' ? 'default' : 'ghost'}
           onClick={() => setActiveTab('edit')}
-          className="flex items-center space-x-2"
+          className={`flex items-center space-x-2 ${activeTab === 'edit' ? `text-purple-500` : `text-white` }`}
         >
           <Edit3 className="h-4 w-4" />
           <span>Edit</span>
         </Button>
         <Button
-          variant={(activeTab as string) === 'preview' ? 'default' : 'ghost'}
+          variant={activeTab === 'edit' ? 'default' : 'ghost'}
           onClick={() => setActiveTab('preview')}
-          className="flex items-center space-x-2"
+          className={`flex items-center space-x-2 ${activeTab === 'edit' ? `text-black` : `text-purple-500` }`}
         >
           <Eye className="h-4 w-4" />
           <span>Preview</span>
@@ -251,18 +277,7 @@ export default function PortfolioEditor({ portfolio: initialPortfolio, onBack }:
         </div>
         
         <div className="space-y-6">
-          <PreviewSidebar portfolio={portfolio} />
-          
-          {/* Quick Preview Button */}
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <Button
-              onClick={() => setActiveTab('preview')}
-              className="w-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center space-x-2"
-            >
-              <Eye className="h-4 w-4" />
-              <span>View Full Preview</span>
-            </Button>
-          </div>
+          <PreviewSidebar portfolio={portfolio} />          
         </div>
       </div>
     </div>

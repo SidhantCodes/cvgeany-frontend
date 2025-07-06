@@ -1,0 +1,73 @@
+{
+  "name": "John",
+  "mail": "john@example.com",
+  "resumeLink": "https://example.com/resume.pdf",
+  "aboutme": "Passionate full-stack developer with experience in modern web technologies. I love creating efficient, scalable solutions and staying up-to-date with the latest industry trends.",
+  "workExperience": [
+    {
+      "title": "Senior Full Stack Developer",
+      "company": "Tech Corp",
+      "duration": "2022 - Present",
+      "description": "Leading development of web applications using React, Node.js, and modern technologies. Mentoring junior developers and architecting scalable solutions."
+    },
+    {
+      "title": "Full Stack Developer",
+      "company": "StartupXYZ",
+      "duration": "2020 - 2021",
+      "description": "Developed and maintained multiple client projects using various technologies. Collaborated with cross-functional teams to deliver high-quality products."
+    }
+  ],
+  "projects": [
+    {
+      "title": "E-commerce Platform",
+      "desc": "A full-featured e-commerce solution built with Next.js and Stripe integration",
+      "image": "/images/fullstack.webp",
+      "livelink": "https://example.com/ecommerce",
+      "repolink": "https://github.com/example/ecommerce"
+    },
+    {
+      "title": "Task Management App",
+      "desc": "A collaborative task management application with real-time updates using Socket.io",
+      "image": "/images/gatewaygram.webp",
+      "livelink": "https://example.com/taskmanager",
+      "repolink": "https://github.com/example/taskmanager"
+    },
+    {
+      "title": "Portfolio Website",
+      "desc": "A responsive portfolio website built with React and Tailwind CSS",
+      "image": "/images/imgify.webp",
+      "livelink": "https://example.com/portfolio",
+      "repolink": "https://github.com/example/portfolio"
+    }
+  ],
+  "skillsData": [
+    {
+      "category": "Frontend",
+      "skills": ["React", "Next.js", "TypeScript", "Tailwind CSS", "HTML5", "CSS3"]
+    },
+    {
+      "category": "Backend",
+      "skills": ["Node.js", "Express", "Python", "PostgreSQL", "MongoDB", "Redis"]
+    },
+    {
+      "category": "DevOps",
+      "skills": ["Docker", "AWS", "Vercel", "GitHub Actions", "Linux"]
+    }
+  ],
+  "socials": [
+    {
+      "name": "github",
+      "url": "https://github.com/johndoe"
+    },
+    {
+      "name": "linkedin",
+      "url": "https://linkedin.com/in/johndoe"
+    },
+    {
+      "name": "twitter",
+      "url": "https://twitter.com/johndoe"
+    }
+  ],
+  "seoKeywords": ["Full Stack Developer", "React Developer", "Node.js", "TypeScript", "Web Development"],
+  "pdfLinks": null
+}
